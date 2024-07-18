@@ -84,9 +84,10 @@ type generatorParam struct {
 }
 
 type Service struct {
-	Name    string
-	Package string
-	Methods []methodTemplate
+	Name       string
+	StructName string
+	Package    string
+	Methods    []methodTemplate
 }
 
 type methodTemplate struct {
@@ -243,10 +244,25 @@ func getGoPackage(proto *descriptor.FileDescriptorProto) (alias string, goPackag
 // change the structure also translate method type
 func extractServices(protos []*descriptor.FileDescriptorProto) []Service {
 	svcTmp := []Service{}
+	serviceStructNameRepeatCount := make(map[string]int)
 	for _, proto := range protos {
 		for _, svc := range proto.GetService() {
 			var s Service
-			s.Name = svc.GetName()
+
+			// edit service name to handle duplicates
+			name := svc.GetName()
+			currentCount := serviceStructNameRepeatCount[name]
+			var buf bytes.Buffer
+			buf.WriteString(name)
+			if currentCount > 0 {
+				buf.WriteString(fmt.Sprint(currentCount + 1))
+			}
+
+			serverName := buf.String()
+			s.StructName = serverName
+			s.Name = name
+			serviceStructNameRepeatCount[string(name)]++
+
 			alias, _ := getGoPackage(proto)
 			if alias != "" {
 				s.Package = alias + "."
@@ -265,7 +281,7 @@ func extractServices(protos []*descriptor.FileDescriptorProto) []Service {
 				methods[j] = methodTemplate{
 					Name:        strings.Title(*method.Name),
 					SvcPackage:  s.Package,
-					ServiceName: svc.GetName(),
+					ServiceName: serverName,
 					Input:       getMessageType(protos, method.GetInputType()),
 					Output:      getMessageType(protos, method.GetOutputType()),
 					MethodType:  tipe,

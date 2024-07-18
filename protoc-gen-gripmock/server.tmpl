@@ -52,7 +52,7 @@ func main() {
 {{ template "find_stub" }}
 
 {{ define "services" }}
-type {{.Name}} struct{}
+type {{.StructName}} struct{}
 
 {{ template "methods" .}}
 {{ end }}
@@ -133,7 +133,7 @@ func (s *{{.ServiceName}}) {{.Name}}(srv {{.SvcPackage}}{{.ServiceName}}_{{.Name
 
 
 {{ define "register_services" }}
-	{{.Package}}Register{{.Name}}Server(s, &{{.Name}}{})
+	{{.Package}}Register{{.Name}}Server(s, &{{.StructName}}{})
 {{ end }}
 
 {{ define "find_stub" }}

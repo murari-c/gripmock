@@ -7,8 +7,10 @@ import (
 	"log"
 	"reflect"
 	"regexp"
+	"strings"
 	"sync"
 
+	"github.com/iancoleman/strcase"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
@@ -38,10 +40,11 @@ func (sm *stubMapping) storeStub(stub *Stub) error {
 		Input:  stub.Input,
 		Output: stub.Output,
 	}
-	if (*sm)[stub.Service] == nil {
-		(*sm)[stub.Service] = make(map[string][]storage)
+	serviceName := constructServerStructName(getDirFromProtoName(stub.RelativeProtoPath), stub.Service)
+	if (*sm)[serviceName] == nil {
+		(*sm)[serviceName] = make(map[string][]storage)
 	}
-	(*sm)[stub.Service][stub.Method] = append((*sm)[stub.Service][stub.Method], strg)
+	(*sm)[serviceName][stub.Method] = append((*sm)[serviceName][stub.Method], strg)
 	return nil
 }
 
@@ -317,4 +320,27 @@ func (sm *stubMapping) readStubFromFile(path string) {
 
 		sm.storeStub(stub)
 	}
+}
+
+func constructServerStructName(protoDir string, serverName string) string {
+	if protoDir == "" {
+		return serverName
+	}
+
+	return fmt.Sprintf(
+		"%s_%s",
+		strings.TrimRight(strcase.ToCamel(strings.ReplaceAll(protoDir, "/", "_")), "_"),
+		serverName,
+	)
+}
+
+func getDirFromProtoName(s string) string {
+	// Then, find the last "/" and remove everything after it
+	lastSlash := strings.LastIndex(s, "/")
+	if lastSlash != -1 {
+		return s[:lastSlash]
+	}
+
+	// If there's no "/", return input string
+	return s
 }

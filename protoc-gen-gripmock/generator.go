@@ -10,6 +10,8 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/iancoleman/strcase"
+
 	"google.golang.org/protobuf/types/pluginpb"
 
 	"github.com/golang/protobuf/proto"
@@ -244,24 +246,17 @@ func getGoPackage(proto *descriptor.FileDescriptorProto) (alias string, goPackag
 // change the structure also translate method type
 func extractServices(protos []*descriptor.FileDescriptorProto) []Service {
 	svcTmp := []Service{}
-	serviceStructNameRepeatCount := make(map[string]int)
 	for _, proto := range protos {
+		protoName := proto.GetName()
+		protoDir := getDirFromProtoName(protoName)
 		for _, svc := range proto.GetService() {
 			var s Service
 
 			// edit service name to handle duplicates
 			name := svc.GetName()
-			currentCount := serviceStructNameRepeatCount[name]
-			var buf bytes.Buffer
-			buf.WriteString(name)
-			if currentCount > 0 {
-				buf.WriteString(fmt.Sprint(currentCount + 1))
-			}
-
-			serverName := buf.String()
+			serverName := constructServerStructName(protoDir, name)
 			s.StructName = serverName
 			s.Name = name
-			serviceStructNameRepeatCount[string(name)]++
 
 			alias, _ := getGoPackage(proto)
 			if alias != "" {
@@ -352,4 +347,27 @@ func isKeyword(word string) bool {
 	}
 
 	return false
+}
+
+func getDirFromProtoName(s string) string {
+	// Then, find the last "/" and remove everything after it
+	lastSlash := strings.LastIndex(s, "/")
+	if lastSlash != -1 {
+		return s[:lastSlash]
+	}
+
+	// If there's no "/", return input string
+	return s
+}
+
+func constructServerStructName(protoDir string, serverName string) string {
+	if protoDir == "" {
+		return serverName
+	}
+
+	return fmt.Sprintf(
+		"%s_%s",
+		strings.TrimRight(strcase.ToCamel(strings.ReplaceAll(protoDir, "/", "_")), "_"),
+		serverName,
+	)
 }

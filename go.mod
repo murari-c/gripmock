@@ -6,6 +6,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/golang/protobuf v1.5.2
+	github.com/iancoleman/strcase v0.3.0
 	github.com/kr/pretty v0.2.0 // indirect
 	github.com/lithammer/fuzzysearch v1.1.1
 	github.com/stretchr/testify v1.7.0

@@ -52,6 +52,8 @@ type Stub struct {
 	Method  string `json:"method"`
 	Input   Input  `json:"input"`
 	Output  Output `json:"output"`
+
+	RelativeProtoPath string `json:"relative_proto_path"`
 }
 
 type Input struct {

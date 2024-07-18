@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"github.com/iancoleman/strcase"
 
@@ -304,7 +305,14 @@ func getMessageType(protos []*descriptor.FileDescriptorProto, tipe string) strin
 				if alias != "" {
 					alias += "."
 				}
-				return fmt.Sprintf("%s%s", alias, msg.GetName())
+
+				// capitalise the first letter of proto message
+				messageType := msg.GetName()
+				if len(messageType) > 0 {
+					messageType = string(unicode.ToUpper(rune(messageType[0]))) + messageType[1:]
+				}
+
+				return fmt.Sprintf("%s%s", alias, messageType)
 			}
 		}
 	}
